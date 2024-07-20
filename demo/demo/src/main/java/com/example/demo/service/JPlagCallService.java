@@ -33,6 +33,28 @@ public class JPlagCallService {
         }
     }
 
+    public String runJPlagWithReportFromUi(File file) throws FileNotFoundException {
+        Language language = new JavaLanguage();
+        Set<File> submissionDirectories = Set.of(file); // Use the uploaded file
+        File baseCode = file; // Use the uploaded file as the base code
+        JPlagOptions options = new JPlagOptions(language, submissionDirectories, Collections.emptySet())
+                .withBaseCodeSubmissionDirectory(baseCode);
+
+        try {
+            JPlagResult result = JPlag.run(options);
+
+            // Generate report
+            File reportFile = new File("C:\\Users\\filip\\Downloads\\reportFilip.zip");
+            ReportObjectFactory reportObjectFactory = new ReportObjectFactory(reportFile);
+            reportObjectFactory.createAndSaveReport(result);
+
+            return "Report generated at " + reportFile.getAbsolutePath();
+        } catch (ExitException e) {
+            throw new RuntimeException("Error occurred during JPlag analysis", e);
+        }
+    }
+
+
     public JPlagResult runJPlagWithReport() throws FileNotFoundException {
         Language language = new JavaLanguage();
         Set<File> submissionDirectories = Set.of(new File("C://Users//filip//Submissions"));
@@ -52,4 +74,5 @@ public class JPlagCallService {
             throw new RuntimeException("Error occurred during JPlag analysis", e);
         }
     }
+
 }
