@@ -40,7 +40,6 @@ public class JPlagCallController {
         @PostMapping("/runJPlagWithReportFromUi")
     public ResponseEntity<String> runJPlagWithReportFromUi(
             @RequestParam("language") String language,
-            @RequestParam("algorithms") String algorithms,
             @RequestParam("folder") MultipartFile folder) throws FileNotFoundException, IOException {
 
         // Save the uploaded folder to a temp location
