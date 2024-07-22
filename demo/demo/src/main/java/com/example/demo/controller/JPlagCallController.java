@@ -13,6 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 
 @RestController
 @RequestMapping("/api/jplag")
@@ -56,6 +59,7 @@ public class JPlagCallController {
             return ResponseEntity.badRequest().body("Uploaded file must be a zip file");
         }
 
+        // Save the uploaded zip file to the temporary directory
         File uploadedZipFile = new File(tempDir, zipFileName);
         folder.transferTo(uploadedZipFile);
 
@@ -67,36 +71,37 @@ public class JPlagCallController {
         // Unzip the contents
         ZipUtils.unzip(uploadedZipFile.getAbsolutePath(), extractedFolder.getAbsolutePath());
 
-
-        // Ensure the direct extracted folder contains files
-        File correctFolder = extractedFolder;
-        File[] files = extractedFolder.listFiles();
-        if (files != null && files.length == 1 && files[0].isDirectory()) {
-            correctFolder = files[0];
-        }
-
-        // Here you can pass 'language' and 'extractedFolder' to your JPlag service for processing
-        String message = jPlagCallService.runJPlagWithReportFromUi( extractedFolder);
+        // Check if there is an extra nested folder and move files to the correct directory
+        File correctFolder = extractCorrectFolder(extractedFolder);
+        // Here you can pass 'language' and 'correctFolder' to your JPlag service for processing
+        String message = jPlagCallService.runJPlagWithReportFromUi(correctFolder);
 
         // Cleanup
-        //FileUtils.deleteQuietly(uploadedZipFile);
-        if (uploadedZipFile.exists() && !uploadedZipFile.delete()) {
-            System.err.println("Failed to delete file: " + uploadedZipFile.getAbsolutePath());
-        }
-
-        if (extractedFolder.exists()) {
-            try {
-                FileUtils.deleteDirectory(extractedFolder);
-            } catch (IOException e) {
-                System.err.println("Failed to delete directory: " + extractedFolder.getAbsolutePath());
-                e.printStackTrace();
-            }
-        }
-
-
+        deleteFile(uploadedZipFile);
         FileUtils.deleteDirectory(extractedFolder);
 
         return ResponseEntity.ok(message);
+
+    }
+
+    private File extractCorrectFolder(File extractedFolder) {
+        File[] files = extractedFolder.listFiles();
+        if (files != null && files.length == 1 && files[0].isDirectory()) {
+            return files[0];
+        }
+        return extractedFolder;
+    }
+
+    private void deleteFile(File file) {
+        try {
+            Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
+
+
+
+
