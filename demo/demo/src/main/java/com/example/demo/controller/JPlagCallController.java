@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -37,43 +38,63 @@ public class JPlagCallController {
         return ResponseEntity.ok(message);
     }
 
-        @PostMapping("/runJPlagWithReportFromUi")
+    @PostMapping("/runJPlagWithReportFromUi")
     public ResponseEntity<String> runJPlagWithReportFromUi(
             @RequestParam("language") String language,
-            @RequestParam("folder") MultipartFile folder) throws FileNotFoundException, IOException {
+            @RequestParam("folder") MultipartFile folder) throws IOException {
 
-        // Save the uploaded folder to a temp location
-        File tempDir = new File("C://Users//filip//Submissions");
+        // Temporary directory to store the uploaded content
+        String tempDirPath = "C://Users//filip//jplag";
+        File tempDir = new File(tempDirPath);
         if (!tempDir.exists()) {
             tempDir.mkdirs();
         }
 
-        // Save the uploaded folder contents to the temp directory
-        String folderName = folder.getOriginalFilename();
-        File tempFolder = new File(tempDir, folderName);
-        tempFolder.mkdirs();
-
-        // Save the uploaded folder as a zip file
-        File zipFile = new File(tempDir, folderName + ".zip");
-        folder.transferTo(zipFile);
-
-        // Unzip the folder into the temp directory
-        try {
-            ZipUtils.unzip(zipFile.getAbsolutePath(), tempFolder.getAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
+        // Extracting the zip file to temp folder
+        String zipFileName = folder.getOriginalFilename();
+        if (zipFileName == null || !zipFileName.endsWith(".zip")) {
+            return ResponseEntity.badRequest().body("Uploaded file must be a zip file");
         }
 
-        // Call the method to run JPlag
-        String message = jPlagCallService.runJPlagWithReportFromUi(tempFolder);
+        File uploadedZipFile = new File(tempDir, zipFileName);
+        folder.transferTo(uploadedZipFile);
 
-        // Delete the temporary folder and zip file after processing
-        if (zipFile.exists()) {
-            zipFile.delete();
+        // Create temp folder to extract the zip file
+        String extractedFolderName = zipFileName.replace(".zip", "");
+        File extractedFolder = new File(tempDir, extractedFolderName);
+        extractedFolder.mkdirs();
+
+        // Unzip the contents
+        ZipUtils.unzip(uploadedZipFile.getAbsolutePath(), extractedFolder.getAbsolutePath());
+
+
+        // Ensure the direct extracted folder contains files
+        File correctFolder = extractedFolder;
+        File[] files = extractedFolder.listFiles();
+        if (files != null && files.length == 1 && files[0].isDirectory()) {
+            correctFolder = files[0];
         }
-        if (tempFolder.exists()) {
-            tempFolder.delete();
+
+        // Here you can pass 'language' and 'extractedFolder' to your JPlag service for processing
+        String message = jPlagCallService.runJPlagWithReportFromUi( extractedFolder);
+
+        // Cleanup
+        //FileUtils.deleteQuietly(uploadedZipFile);
+        if (uploadedZipFile.exists() && !uploadedZipFile.delete()) {
+            System.err.println("Failed to delete file: " + uploadedZipFile.getAbsolutePath());
         }
+
+        if (extractedFolder.exists()) {
+            try {
+                FileUtils.deleteDirectory(extractedFolder);
+            } catch (IOException e) {
+                System.err.println("Failed to delete directory: " + extractedFolder.getAbsolutePath());
+                e.printStackTrace();
+            }
+        }
+
+
+        FileUtils.deleteDirectory(extractedFolder);
 
         return ResponseEntity.ok(message);
     }
