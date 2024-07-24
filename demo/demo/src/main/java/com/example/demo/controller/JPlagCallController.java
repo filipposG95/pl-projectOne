@@ -2,7 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.ZipUtils;
 import com.example.demo.service.JPlagCallService;
-import org.apache.tomcat.util.http.fileupload.FileUtils;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/jplag")
@@ -42,12 +44,12 @@ public class JPlagCallController {
     }
 
     @PostMapping("/runJPlagWithReportFromUi")
-    public ResponseEntity<String> runJPlagWithReportFromUi(
+    public ResponseEntity<Map<String, String>> runJPlagWithReportFromUi(
             @RequestParam("language") String language,
             @RequestParam("folder") MultipartFile folder) throws IOException {
 
         // Temporary directory to store the uploaded content
-        String tempDirPath = "C://Users//filip//jplag";
+        String tempDirPath = "C://Users//filip//jplag";//to fix the path
         File tempDir = new File(tempDirPath);
         if (!tempDir.exists()) {
             tempDir.mkdirs();
@@ -56,16 +58,17 @@ public class JPlagCallController {
         // Extracting the zip file to temp folder
         String zipFileName = folder.getOriginalFilename();
         if (zipFileName == null || !zipFileName.endsWith(".zip")) {
-            return ResponseEntity.badRequest().body("Uploaded file must be a zip file");
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Uploaded file must be a zip file");
+            return ResponseEntity.badRequest().body(response);
         }
 
         // Save the uploaded zip file to the temporary directory
         File uploadedZipFile = new File(tempDir, zipFileName);
         folder.transferTo(uploadedZipFile);
 
-        // Create temp folder to extract the zip file
-        String extractedFolderName = zipFileName.replace(".zip", "");
-        File extractedFolder = new File(tempDir, extractedFolderName);
+        // Create a directory to extract the zip file
+        File extractedFolder = new File(tempDir, zipFileName.replace(".zip", ""));
         extractedFolder.mkdirs();
 
         // Unzip the contents
@@ -73,14 +76,19 @@ public class JPlagCallController {
 
         // Check if there is an extra nested folder and move files to the correct directory
         File correctFolder = extractCorrectFolder(extractedFolder);
-        // Here you can pass 'language' and 'correctFolder' to your JPlag service for processing
-        String message = jPlagCallService.runJPlagWithReportFromUi(correctFolder);
+
+        // Run JPlag processing and get the result file
+        File resultZipFile = jPlagCallService.runJPlagWithReportFromUi(language, correctFolder);
 
         // Cleanup
         deleteFile(uploadedZipFile);
         FileUtils.deleteDirectory(extractedFolder);
 
-        return ResponseEntity.ok(message);
+        // Prepare the response
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Report generated successfully");
+        response.put("reportFilePath", resultZipFile.getAbsolutePath());
+        return ResponseEntity.ok(response);
 
     }
 
