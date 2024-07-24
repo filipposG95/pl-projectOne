@@ -53,11 +53,11 @@ public class JPlagCallService {
         }
     }
 
-    public File runJPlagWithReportFromUi(String Language, File file) throws FileNotFoundException {
-        Language language = new JavaLanguage();
-        switch (language.toString().toLowerCase()){
+    public File runJPlagWithReportFromUi(String language, File file) throws FileNotFoundException {
+        Language jplagLanguage;
+        switch (language.toLowerCase()){
             case "java":
-                language = new JavaLanguage();
+                jplagLanguage = new JavaLanguage();
                 break;
      //     case "c":
      //         jplagLanguage = new CLanguage();
@@ -72,8 +72,7 @@ public class JPlagCallService {
                 throw new IllegalArgumentException("Unsupported language: " + language);
         }
         Set<File> submissionDirectories = Set.of(file); // Use the uploaded file
-        File baseCode = file; // Use the uploaded file as the base code
-        JPlagOptions options = new JPlagOptions(language, submissionDirectories, Collections.emptySet())
+        JPlagOptions options = new JPlagOptions(jplagLanguage, submissionDirectories, Collections.emptySet())
                 .withBaseCodeSubmissionDirectory(file);
 
         try {
