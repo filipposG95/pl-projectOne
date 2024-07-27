@@ -1,16 +1,23 @@
 package com.example.demo.service;
 
-
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
+import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
+import de.jplag.merging.MergingOptions;
 import de.jplag.options.JPlagOptions;
+//import de.jplag.options.SimilarityMetric;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import org.springframework.stereotype.Service;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
@@ -72,20 +79,42 @@ public class JPlagCallService {
                 throw new IllegalArgumentException("Unsupported language: " + language);
         }
         Set<File> submissionDirectories = Set.of(file); // Use the uploaded file
-        JPlagOptions options = new JPlagOptions(jplagLanguage, submissionDirectories, Collections.emptySet())
-                .withBaseCodeSubmissionDirectory(file);
+        double similarityThreshold = 0.05;
+
+        JPlagOptions options = new JPlagOptions(
+                jplagLanguage,
+                9,  // minimum token match
+                submissionDirectories,
+                Collections.emptySet(), // empty old submissions for now
+                new File("C://Users//filip"),
+                null,
+                Arrays.asList("*.java"), // file patterns
+                null,
+                SimilarityMetric.AVG,
+                similarityThreshold,
+                500,  // maximum comparisons
+                new ClusteringOptions(),
+                false, // disable debug parser
+                new MergingOptions(),
+                false  // disable normalization
+        );
 
         try {
             JPlagResult result = JPlag.run(options);
 
-            // Generate report
-            File reportFile = new File("C:\\Users\\filip\\Downloads\\reportFilip.zip");
+            // Generate report in a temporary directory
+            Path tempReportDir = Files.createTempDirectory("jplag_report");
+            File reportFile = tempReportDir.resolve("report.zip").toFile();
+
             ReportObjectFactory reportObjectFactory = new ReportObjectFactory(reportFile);
             reportObjectFactory.createAndSaveReport(result);
 
+            // Return the path to the generated report file
             return reportFile;
         } catch (ExitException e) {
-            throw new RuntimeException("Error occurred during JPlag analysis", e);
+            throw new RuntimeException("Error occurred during JPlag analysis: " + e.getMessage(), e);
+        } catch (IOException e) {
+            throw new RuntimeException("I/O error occurred while handling JPlag report: " + e.getMessage(), e);
         }
     }
 

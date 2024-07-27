@@ -48,27 +48,23 @@ public class JPlagCallController {
             @RequestParam("language") String language,
             @RequestParam("folder") MultipartFile folder) throws IOException {
 
-        // Temporary directory to store the uploaded content
-        String tempDirPath = "C://Users//filip//jplag";//to fix the path
-        File tempDir = new File(tempDirPath);
-        if (!tempDir.exists()) {
-            tempDir.mkdirs();
-        }
-
-        // Extracting the zip file to temp folder
-        String zipFileName = folder.getOriginalFilename();
-        if (zipFileName == null || !zipFileName.endsWith(".zip")) {
+        // Validate file
+        if (folder.isEmpty() || !folder.getOriginalFilename().endsWith(".zip")) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Uploaded file must be a zip file");
             return ResponseEntity.badRequest().body(response);
         }
 
+        // Create a temporary directory for the operation
+        Path tempPath = Files.createTempDirectory("jplag_temp");
+        File tempDir = tempPath.toFile();
+
         // Save the uploaded zip file to the temporary directory
-        File uploadedZipFile = new File(tempDir, zipFileName);
+        File uploadedZipFile = new File(tempDir, folder.getOriginalFilename());
         folder.transferTo(uploadedZipFile);
 
         // Create a directory to extract the zip file
-        File extractedFolder = new File(tempDir, zipFileName.replace(".zip", ""));
+        File extractedFolder = new File(tempDir, "extracted");
         extractedFolder.mkdirs();
 
         // Unzip the contents
@@ -80,7 +76,7 @@ public class JPlagCallController {
         // Run JPlag processing and get the result file
         File resultZipFile = jPlagCallService.runJPlagWithReportFromUi(language, correctFolder);
 
-        // Cleanup
+        // Clean up temporary files
         deleteFile(uploadedZipFile);
         FileUtils.deleteDirectory(extractedFolder);
 
@@ -89,7 +85,6 @@ public class JPlagCallController {
         response.put("message", "Report generated successfully");
         response.put("reportFilePath", resultZipFile.getAbsolutePath());
         return ResponseEntity.ok(response);
-
     }
 
     private File extractCorrectFolder(File extractedFolder) {

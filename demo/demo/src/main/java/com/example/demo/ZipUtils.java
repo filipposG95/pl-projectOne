@@ -8,26 +8,50 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class ZipUtils {
+    public static void unzip(String zipFilePath, String destDir) throws IOException {
+        File dir = new File(destDir);
+        if (!dir.exists()) dir.mkdirs();
 
-    public static void unzip(String zipFilePath, String destDirectory) throws IOException {
-        try (ZipArchiveInputStream zipIn = new ZipArchiveInputStream(new FileInputStream(zipFilePath))) {
-            ArchiveEntry entry;
-            while ((entry = zipIn.getNextEntry()) != null) {
-                File entryFile = new File(destDirectory, entry.getName());
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFilePath))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                File newFile = newFile(dir, entry);
                 if (entry.isDirectory()) {
-                    entryFile.mkdirs();
+                    newFile.mkdirs();
                 } else {
-                    File parent = entryFile.getParentFile();
+                    // Ensure parent directory exists (for nested files inside the ZIP)
+                    File parent = newFile.getParentFile();
                     if (parent != null && !parent.exists()) {
                         parent.mkdirs();
                     }
-                    try (FileOutputStream fos = new FileOutputStream(entryFile)) {
-                        IOUtils.copy(zipIn, fos);
+
+                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
+                        byte[] buffer = new byte[1024];
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, len);
+                        }
                     }
                 }
+                zis.closeEntry();
+                entry = zis.getNextEntry();
             }
         }
+    }
+
+    private static File newFile(File destinationDir, ZipEntry zipEntry) throws IOException {
+        File destFile = new File(destinationDir, zipEntry.getName());
+        String destDirPath = destinationDir.getCanonicalPath();
+        String destFilePath = destFile.getCanonicalPath();
+
+        if (!destFilePath.startsWith(destDirPath + File.separator)) {
+            throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
+        }
+
+        return destFile;
     }
 }
