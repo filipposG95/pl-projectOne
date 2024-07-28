@@ -8,7 +8,7 @@ import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
 import de.jplag.merging.MergingOptions;
 import de.jplag.options.JPlagOptions;
-import de.jplag.options.SimilarityMetric;
+//import de.jplag.options.SimilarityMetric;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import org.springframework.stereotype.Service;
 
@@ -79,24 +79,17 @@ public class JPlagCallService {
                 throw new IllegalArgumentException("Unsupported language: " + language);
         }
         Set<File> submissionDirectories = Set.of(file); // Use the uploaded file
-        double similarityThreshold = 0.05;
+        double similarityThreshold = 0.0;
+
+
+        System.out.println("Running JPlag with submission directories: " + submissionDirectories);
+        //System.out.println("Base code directory: " + baseCodeDirectory.getAbsolutePath());
+
 
         JPlagOptions options = new JPlagOptions(
                 jplagLanguage,
-                9,  // minimum token match
-                submissionDirectories,
-                Collections.emptySet(), // empty old submissions for now
-                new File("C://Users//filip"),
-                null,
-                Arrays.asList("*.java"), // file patterns
-                null,
-                JPlagOptions..AVG,
-                similarityThreshold,
-                500,  // maximum comparisons
-                new ClusteringOptions(),
-                false, // disable debug parser
-                new MergingOptions(),
-                false  // disable normalization
+                submissionDirectories,          // Use the uploaded file
+                Collections.emptySet()
         );
 
         try {
