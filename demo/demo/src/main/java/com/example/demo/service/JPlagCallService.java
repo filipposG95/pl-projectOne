@@ -3,12 +3,9 @@ package com.example.demo.service;
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
-import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
-import de.jplag.merging.MergingOptions;
 import de.jplag.options.JPlagOptions;
-//import de.jplag.options.SimilarityMetric;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +14,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
@@ -79,7 +75,7 @@ public class JPlagCallService {
                 throw new IllegalArgumentException("Unsupported language: " + language);
         }
         Set<File> submissionDirectories = Set.of(file); // Use the uploaded file
-        double similarityThreshold = 0.0;
+        //double similarityThreshold = 0.0;
 
 
         System.out.println("Running JPlag with submission directories: " + submissionDirectories);
