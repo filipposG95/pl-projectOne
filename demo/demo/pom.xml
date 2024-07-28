@@ -8,52 +8,51 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<!-- Replace with the latest Spring Boot version -->
-		<version>3.0.5</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<version>3.0.5</version> <!-- Use the appropriate version of Spring Boot -->
+		<relativePath/>
 	</parent>
 
 	<groupId>com.example</groupId>
 	<artifactId>demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>demo</name>
 	<description>Demo project for Spring Boot</description>
-	<!-- Add a valid URL if applicable -->
-	<url>https://example.com</url>
 
 	<properties>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
+		<java.version>21</java.version> <!-- Ensure this matches the JDK you have -->
+		<maven.compiler.source>${java.version}</maven.compiler.source>
+		<maven.compiler.target>${java.version}</maven.compiler.target>
 	</properties>
 
 	<dependencies>
-		<!-- Spring Boot Starter Web -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<!-- Spring Boot Starter Test -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 
+		<!-- JPlag Dependencies -->
 		<dependency>
 			<groupId>de.jplag</groupId>
 			<artifactId>jplag</artifactId>
-			<version>5.1.0</version>
+			<version>5.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>de.jplag</groupId>
+			<artifactId>language-api</artifactId>
+			<version>5.0.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>de.jplag</groupId>
 			<artifactId>java</artifactId>
-			<version>5.1.0</version>
+			<version>5.0.0</version>
 		</dependency>
-
-
-		<!-- Spring Boot Starter Web -->
 
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -61,20 +60,27 @@
 			<version>1.21</version>
 		</dependency>
 
-
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.11.0</version> <!-- or the latest version -->
+			<version>2.11.0</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>2.0.12</version>
+		</dependency>
 
-
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>2.0.12</version>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
-			<!-- Spring Boot Maven Plugin -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -85,12 +91,10 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
 				<configuration>
-					<source>21</source>
-					<target>21</target>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
 				</configuration>
 			</plugin>
-
 		</plugins>
 	</build>
-
 </project>

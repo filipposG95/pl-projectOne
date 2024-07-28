@@ -8,7 +8,7 @@ import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
 import de.jplag.merging.MergingOptions;
 import de.jplag.options.JPlagOptions;
-//import de.jplag.options.SimilarityMetric;
+import de.jplag.options.SimilarityMetric;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import org.springframework.stereotype.Service;
 
@@ -90,7 +90,7 @@ public class JPlagCallService {
                 null,
                 Arrays.asList("*.java"), // file patterns
                 null,
-                SimilarityMetric.AVG,
+                JPlagOptions..AVG,
                 similarityThreshold,
                 500,  // maximum comparisons
                 new ClusteringOptions(),
