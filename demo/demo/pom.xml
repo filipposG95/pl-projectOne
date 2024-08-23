@@ -79,12 +79,19 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.example</groupId>
+			<groupId>local.lib</groupId>
 			<artifactId>fett</artifactId>
-			<version>1.0.0</version>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/libs/fett.jar</systemPath>
 		</dependency>
 
 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+			<version>3.2.1</version>
+		</dependency>
 
 	</dependencies>
 

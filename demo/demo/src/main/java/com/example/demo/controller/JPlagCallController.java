@@ -19,6 +19,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+
 @RestController
 @RequestMapping("/api/jplag")
 @CrossOrigin(origins = "http://localhost:4200") // Adjust if necessary
@@ -85,6 +90,12 @@ public class JPlagCallController {
         response.put("message", "Report generated successfully");
         response.put("reportFilePath", resultZipFile.getAbsolutePath());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/run-fett")
+    public ResponseEntity<String> runFett() {
+        String message = jPlagCallService.runFettTool();
+        return ResponseEntity.ok(message);
     }
 
     private File extractCorrectFolder(File extractedFolder) {
