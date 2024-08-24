@@ -94,16 +94,16 @@ public class JPlagCallController {
 
 
     @PostMapping("/run-fett")
-    public ResponseEntity<Map<String, String>> runFett(
+    public ResponseEntity<Map<String, Object>> runFett(
             @RequestParam("language") String language,
             @RequestParam("folder") MultipartFile folder) throws IOException {
 
 
         // Validate file
         if (folder.isEmpty() || !folder.getOriginalFilename().endsWith(".zip")) {
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Uploaded file must be a zip file");
-            return ResponseEntity.badRequest().body(response);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Uploaded file must be a zip file");
+            return ResponseEntity.badRequest().body(errorResponse);
         }
         // Create a temporary directory for the operation
         Path tempPath = Files.createTempDirectory("fett_temp");
@@ -123,17 +123,17 @@ public class JPlagCallController {
         // Check if there is an extra nested folder and move files to the correct directory
         File correctFolder = extractCorrectFolder(extractedFolder);
 
-        File resultMessage = jPlagCallService.runFettTool(correctFolder, language);
+        String resultMessageJson  = jPlagCallService.runFettTool(correctFolder, language);
 
         // Clean up temporary files
         deleteFile(uploadedZipFile);
         FileUtils.deleteDirectory(extractedFolder);
 
         // Prepare the response
-        Map<String, String> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("message", "Report generated successfully");
-        response.put("reportFilePath", resultMessage.getAbsolutePath());
-        return ResponseEntity.ok(response);
+        response.put("results", resultMessageJson);
+        return ResponseEntity.ok(Map.of("message", "Report generated successfully", "results", resultMessageJson));
     }
 
     private File extractCorrectFolder(File extractedFolder) {

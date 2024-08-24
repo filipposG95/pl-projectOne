@@ -123,18 +123,18 @@ public class JPlagCallService {
         }
     }
 
-    public File runFettTool(File javaFilesDirectory, String language) {
+    public String runFettTool(File javaFilesDirectory, String language) {
         System.out.println("Checking directory: " + javaFilesDirectory.getAbsolutePath());
 
         // Validate that the directory exists and is a directory
         if (!javaFilesDirectory.exists() || !javaFilesDirectory.isDirectory()) {
             System.out.println("Invalid directory.");
-            return new File("Invalid directory.");
+            return "{\"error\": \"Invalid directory.\"}";
         }
 
         if (!javaFilesDirectory.canRead()) {
             System.out.println("Cannot read directory: " + javaFilesDirectory.getAbsolutePath());
-            return new File("Cannot read Java files directory: " + javaFilesDirectory.getAbsolutePath());
+            return "{\"error\": \"Cannot read Java files directory.\"}";
         }
 
         // Collect all .java files from the specified directory
@@ -142,7 +142,7 @@ public class JPlagCallService {
         File[] files = javaFilesDirectory.listFiles();
         if (files == null) {
             System.out.println("Unable to read contents of the directory: " + javaFilesDirectory.getAbsolutePath());
-            return new File("Unable to access contents of the directory: " + javaFilesDirectory.getAbsolutePath());
+            return "{\"error\": \"Unable to access contents of the directory.\"}";
         } else {
             for (File file : files) {
                 System.out.println("Checking file: " + file.getAbsolutePath());
@@ -161,7 +161,7 @@ public class JPlagCallService {
 
         if (javaFiles.isEmpty()) {
             System.out.println("No Java files found in: " + javaFilesDirectory.getAbsolutePath());
-            return new File("No Java files found in: " + javaFilesDirectory.getAbsolutePath());
+            return "{\"error\": \"No Java files found in the directory.\"}";
         }
 
         // Correct classFile path
@@ -198,13 +198,15 @@ public class JPlagCallService {
             String processOutput = captureProcessOutput(process);
 
             if (process.waitFor() == 0) {
-                return new File("Fett tool ran successfully:\n" + processOutput);
+                // Parse results into a structured format if needed
+              //  String jsonResults = parseSimilarityResults(processOutput);
+                return parseSimilarityResults(processOutput);
             } else {
-                return new File("Error running Fett tool:\n" + processOutput);
+                return "{\"error\": \"Error running Fett tool\"}";
             }
         } catch (IOException | InterruptedException e) {
             System.out.println("Error occurred while running Fett tool: " + e.getMessage());
-            return new File("Error occurred while running Fett tool: " + e.getMessage());
+            return "{\"error\": \"Error occurred while running Fett tool: " + e.getMessage() + "\"}";
         }
     }
 
@@ -231,6 +233,28 @@ public class JPlagCallService {
         return output.toString();
     }
 
+
+    private String parseSimilarityResults(String output) {
+        StringBuilder jsonBuilder = new StringBuilder("{\"results\":[");
+        String[] lines = output.split("\n");
+        for (String line : lines) {
+            String[] parts = line.split(",");
+            if (parts.length > 2) {
+                jsonBuilder.append("{\"file1\":\"").append(parts[0]).append("\",");
+                jsonBuilder.append("\"file2\":\"").append(parts[1]).append("\",");
+                jsonBuilder.append("\"similarity\":").append(parts[2]).append("},");
+            }
+        }
+        if (jsonBuilder.length() > 11) {
+            jsonBuilder.deleteCharAt(jsonBuilder.length() - 1); // Remove trailing comma
+        }
+        jsonBuilder.append("]}");
+
+        System.out.println("Process output: " + output);
+
+
+        return jsonBuilder.toString();
+    }
 
 
 }
