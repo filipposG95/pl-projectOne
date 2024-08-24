@@ -30,7 +30,7 @@ public class JPlagCallService {
     // Define the paths as class-level constants or variables
     private static final String RESULTS_CSV_PATH = "C://Users//filip//Downloads//results.csv";
     private static final String FETT_JAR_PATH = "C:\\Users\\filip\\IdeaProjects\\pl-projectOne\\demo\\demo\\libs\\fett.jar";
-    private static final String CLASS_FILE_PATH = "C:/Users/filip/Downloads/Submissions3";
+    private static final String CLASS_FILE_PATH = "C:\\Users\\filip\\12345";
 
     private final String SUBMISSION_DIR = "C://Users//filip//Submissions";
     private final String REPORT_DIR = "C:\\Users\\filip\\Downloads\\reportFilip.zip";
@@ -123,22 +123,53 @@ public class JPlagCallService {
         }
     }
 
-    public String runFettTool() {
-        String outputFile = RESULTS_CSV_PATH;
-        File submissionDir = new File(CLASS_FILE_PATH);
+    public File runFettTool(File javaFilesDirectory, String language) {
+        System.out.println("Checking directory: " + javaFilesDirectory.getAbsolutePath());
 
-        // Check if the directory exists and is readable
-        if (!submissionDir.exists()) {
-            return "Submission directory does not exist: " + submissionDir.getAbsolutePath();
+        // Validate that the directory exists and is a directory
+        if (!javaFilesDirectory.exists() || !javaFilesDirectory.isDirectory()) {
+            System.out.println("Invalid directory.");
+            return new File("Invalid directory.");
         }
 
-        if (!submissionDir.canRead()) {
-            return "Cannot read submission directory: " + submissionDir.getAbsolutePath();
+        if (!javaFilesDirectory.canRead()) {
+            System.out.println("Cannot read directory: " + javaFilesDirectory.getAbsolutePath());
+            return new File("Cannot read Java files directory: " + javaFilesDirectory.getAbsolutePath());
         }
 
+        // Collect all .java files from the specified directory
+        List<String> javaFiles = new ArrayList<>();
+        File[] files = javaFilesDirectory.listFiles();
+        if (files == null) {
+            System.out.println("Unable to read contents of the directory: " + javaFilesDirectory.getAbsolutePath());
+            return new File("Unable to access contents of the directory: " + javaFilesDirectory.getAbsolutePath());
+        } else {
+            for (File file : files) {
+                System.out.println("Checking file: " + file.getAbsolutePath());
+                if (file.isFile() && file.getName().endsWith(".java")) {
+                    if (file.canRead()) {
+                        System.out.println("Adding Java file: " + file.getAbsolutePath());
+                        javaFiles.add(file.getAbsolutePath());
+                    } else {
+                        System.out.println("Cannot read Java file: " + file.getAbsolutePath());
+                    }
+                } else {
+                    System.out.println("Skipping non-Java file or directory: " + file.getAbsolutePath());
+                }
+            }
+        }
+
+        if (javaFiles.isEmpty()) {
+            System.out.println("No Java files found in: " + javaFilesDirectory.getAbsolutePath());
+            return new File("No Java files found in: " + javaFilesDirectory.getAbsolutePath());
+        }
+
+        // Correct classFile path
+       String correctedClassFilePath = "C:\\Users\\filip\\IdeaProjects\\plagiarism-detector\\src\\main\\resources\\new.json";
+      //  String correctedClassFilePath = determineClassFilePath(language);
         // Construct the command using a list of strings to avoid issues with spaces in paths
         List<String> command = new ArrayList<>();
-        command.add("java");
+        command.add(language);
         command.add("-jar");
         command.add(FETT_JAR_PATH);
         command.add("-s");
@@ -149,14 +180,14 @@ public class JPlagCallService {
         command.add("similarity=classBased");
         command.add("matchScore=1");
         command.add("gapScore=-2");
-        command.add("classFile=" + CLASS_FILE_PATH);
+        command.add("classFile=" + correctedClassFilePath);
         command.add("-c");
-        command.add(outputFile);
+        command.add(RESULTS_CSV_PATH);
         command.add("-j6");
         command.add("allpairs");
-        command.add("src/test/resources/plagiarism-detection/generated/java/*.java");
+        command.addAll(javaFiles);
 
-        // Log the command for debugging
+        // Log the full command for debugging
         System.out.println("Running command: " + String.join(" ", command));
 
         try {
@@ -167,16 +198,15 @@ public class JPlagCallService {
             String processOutput = captureProcessOutput(process);
 
             if (process.waitFor() == 0) {
-                return "Fett tool ran successfully:\n" + processOutput;
+                return new File("Fett tool ran successfully:\n" + processOutput);
             } else {
-                return "Error running Fett tool:\n" + processOutput;
+                return new File("Error running Fett tool:\n" + processOutput);
             }
-
         } catch (IOException | InterruptedException e) {
-            return "Error occurred while running Fett tool: " + e.getMessage();
+            System.out.println("Error occurred while running Fett tool: " + e.getMessage());
+            return new File("Error occurred while running Fett tool: " + e.getMessage());
         }
     }
-
 
     private String captureProcessOutput(Process process) throws IOException {
         StringBuilder output = new StringBuilder();

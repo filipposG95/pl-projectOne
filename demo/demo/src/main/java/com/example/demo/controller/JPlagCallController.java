@@ -92,10 +92,48 @@ public class JPlagCallController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/run-fett")
-    public ResponseEntity<String> runFett() {
-        String message = jPlagCallService.runFettTool();
-        return ResponseEntity.ok(message);
+
+    @PostMapping("/run-fett")
+    public ResponseEntity<Map<String, String>> runFett(
+            @RequestParam("language") String language,
+            @RequestParam("folder") MultipartFile folder) throws IOException {
+
+
+        // Validate file
+        if (folder.isEmpty() || !folder.getOriginalFilename().endsWith(".zip")) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Uploaded file must be a zip file");
+            return ResponseEntity.badRequest().body(response);
+        }
+        // Create a temporary directory for the operation
+        Path tempPath = Files.createTempDirectory("fett_temp");
+        File tempDir = tempPath.toFile();
+
+        // Save the uploaded zip file to the temporary directory
+        File uploadedZipFile = new File(tempDir, folder.getOriginalFilename());
+        folder.transferTo(uploadedZipFile);
+
+        // Create a directory to extract the zip file
+        File extractedFolder = new File(tempDir, "extracted");
+        extractedFolder.mkdirs();
+
+        // Unzip the contents
+        ZipUtils.unzip(uploadedZipFile.getAbsolutePath(), extractedFolder.getAbsolutePath());
+
+        // Check if there is an extra nested folder and move files to the correct directory
+        File correctFolder = extractCorrectFolder(extractedFolder);
+
+        File resultMessage = jPlagCallService.runFettTool(correctFolder, language);
+
+        // Clean up temporary files
+        deleteFile(uploadedZipFile);
+        FileUtils.deleteDirectory(extractedFolder);
+
+        // Prepare the response
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Report generated successfully");
+        response.put("reportFilePath", resultMessage.getAbsolutePath());
+        return ResponseEntity.ok(response);
     }
 
     private File extractCorrectFolder(File extractedFolder) {

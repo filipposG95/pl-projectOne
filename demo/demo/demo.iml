@@ -84,15 +84,7 @@
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.11.0" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:2.0.12" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-simple:2.0.12" level="project" />
-    <orderEntry type="module-library">
-      <library name="Maven: local.lib:fett:1.0">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/libs/fett.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="Maven: local.lib:fett:1.0" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot-starter-actuator:3.2.1" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot-actuator-autoconfigure:3.0.5" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot-actuator:3.0.5" level="project" />

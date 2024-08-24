@@ -82,9 +82,8 @@
 			<groupId>local.lib</groupId>
 			<artifactId>fett</artifactId>
 			<version>1.0</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/libs/fett.jar</systemPath>
 		</dependency>
+
 
 
 		<dependency>
