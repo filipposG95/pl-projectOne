@@ -129,10 +129,14 @@ public class JPlagCallController {
         deleteFile(uploadedZipFile);
         FileUtils.deleteDirectory(extractedFolder);
 
+        // Log the resultMessageJson to ensure it's correct
+        System.out.println("Response JSON: " + resultMessageJson);
+
         // Prepare the response
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Report generated successfully");
         response.put("results", resultMessageJson);
+        //return ResponseEntity.ok(response);
         return ResponseEntity.ok(Map.of("message", "Report generated successfully", "results", resultMessageJson));
     }
 

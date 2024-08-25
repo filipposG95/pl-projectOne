@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.FileReader;
 
 @Service
 public class JPlagCallService {
@@ -74,19 +76,19 @@ public class JPlagCallService {
 
     public File runJPlagWithReportFromUi(String language, File file) throws FileNotFoundException {
         Language jplagLanguage;
-        switch (language.toLowerCase()){
+        switch (language.toLowerCase()) {
             case "java":
                 jplagLanguage = new JavaLanguage();
                 break;
-     //     case "c":
-     //         jplagLanguage = new CLanguage();
-     //         break;
-     //     case "c++":
-     //         jplagLanguage = new CppLanguage();
-     //         break;
-     //     case "python":
-     //         jplagLanguage = new PythonLanguage();
-     //         break;
+            //     case "c":
+            //         jplagLanguage = new CLanguage();
+            //         break;
+            //     case "c++":
+            //         jplagLanguage = new CppLanguage();
+            //         break;
+            //     case "python":
+            //         jplagLanguage = new PythonLanguage();
+            //         break;
             default:
                 throw new IllegalArgumentException("Unsupported language: " + language);
         }
@@ -165,8 +167,8 @@ public class JPlagCallService {
         }
 
         // Correct classFile path
-       String correctedClassFilePath = "C:\\Users\\filip\\IdeaProjects\\plagiarism-detector\\src\\main\\resources\\new.json";
-      //  String correctedClassFilePath = determineClassFilePath(language);
+        String correctedClassFilePath = "C:\\Users\\filip\\IdeaProjects\\plagiarism-detector\\src\\main\\resources\\new.json";
+        //  String correctedClassFilePath = determineClassFilePath(language);
         // Construct the command using a list of strings to avoid issues with spaces in paths
         List<String> command = new ArrayList<>();
         command.add(language);
@@ -199,8 +201,8 @@ public class JPlagCallService {
 
             if (process.waitFor() == 0) {
                 // Parse results into a structured format if needed
-              //  String jsonResults = parseSimilarityResults(processOutput);
-                return parseSimilarityResults(processOutput);
+                //  String jsonResults = parseSimilarityResults(processOutput);
+                return parseResultsFromCSV(RESULTS_CSV_PATH);
             } else {
                 return "{\"error\": \"Error running Fett tool\"}";
             }
@@ -217,15 +219,15 @@ public class JPlagCallService {
             String line;
             while ((line = reader.readLine()) != null) {
                 output.append(line).append(System.lineSeparator());
+                System.out.println("Tool Output Line: " + line); // Logging each line
             }
         }
 
-        // Capture errors if the process fails
         if (process.exitValue() != 0) {
             try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
                 String errorLine;
                 while ((errorLine = errorReader.readLine()) != null) {
-                    output.append(errorLine).append(System.lineSeparator());
+                    System.out.println("Tool Error Output: " + errorLine); // Log error output
                 }
             }
         }
@@ -234,24 +236,89 @@ public class JPlagCallService {
     }
 
 
-    private String parseSimilarityResults(String output) {
+    private String parseSimilarityResults(String csvOutput) {
         StringBuilder jsonBuilder = new StringBuilder("{\"results\":[");
-        String[] lines = output.split("\n");
-        for (String line : lines) {
-            String[] parts = line.split(",");
-            if (parts.length > 2) {
-                jsonBuilder.append("{\"file1\":\"").append(parts[0]).append("\",");
-                jsonBuilder.append("\"file2\":\"").append(parts[1]).append("\",");
-                jsonBuilder.append("\"similarity\":").append(parts[2]).append("},");
+        String[] lines = csvOutput.split(System.lineSeparator());
+
+        if (lines.length < 2) return "{\"results\":[]}"; // If less than 2 lines, no data to process
+
+        // The first line of the CSV seems to be the file names header, split them
+        String[] files = lines[0].split(",");
+
+        // Iterate over each pair of lines to extract similarity score except the header line
+        for (int i = 1; i < lines.length; i++) {
+            String[] scores = lines[i].split(",");
+
+            // Start from the second column because the first column is a filename
+            for (int j = 1; j < scores.length; j++) {
+                try {
+                    double similarity = Double.parseDouble(scores[j]);
+
+                    // Avoid self-comparison which would always be 1.0
+                    if (i != j && similarity != 1.0) {
+                        jsonBuilder.append("{\"file1\":\"").append(files[i]).append("\",")
+                                .append("\"file2\":\"").append(files[j]).append("\",")
+                                .append("\"similarity\":").append(new DecimalFormat("#.##").format(similarity * 100)).append("},");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid similarity value between " + files[i] + " and " + files[j] + ": " + scores[j]);
+                }
             }
         }
-        if (jsonBuilder.length() > 11) {
-            jsonBuilder.deleteCharAt(jsonBuilder.length() - 1); // Remove trailing comma
+
+        if (jsonBuilder.charAt(jsonBuilder.length() - 1) == ',') {
+            jsonBuilder.deleteCharAt(jsonBuilder.length() - 1);
         }
+
         jsonBuilder.append("]}");
 
-        System.out.println("Process output: " + output);
+        return jsonBuilder.toString();
+    }
 
+    private String parseResultsFromCSV(String csvFilePath) {
+        StringBuilder jsonBuilder = new StringBuilder("{\"results\":[");
+
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFilePath))) {
+            String line;
+            String[] files = br.readLine().split(","); // Read the first line for filenames (header)
+
+            int numberOfFiles = files.length - 1;
+
+            int rowIndex = 0;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                for (int colIndex = 1; colIndex <= numberOfFiles; colIndex++) {
+                    if (rowIndex != colIndex - 1) { // Skip self-similarity
+                        try {
+                            double similarity = Double.parseDouble(values[colIndex]);
+                            if (similarity != 1.0) {
+                                jsonBuilder.append("{\"file1\":\"")
+                                        .append(files[rowIndex + 1].replace("\\", "\\\\"))
+                                        .append("\",")
+                                        .append("\"file2\":\"")
+                                        .append(files[colIndex].replace("\\", "\\\\"))
+                                        .append("\",")
+                                        .append("\"similarity\":")
+                                        .append(new DecimalFormat("#.##").format(similarity * 100))
+                                        .append("},");
+                            }
+                        } catch (NumberFormatException e) {
+                            System.out.println("Invalid similarity value between " + files[rowIndex + 1] + " and " + files[colIndex] + ": " + values[colIndex]);
+                        }
+                    }
+                }
+                rowIndex++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "{\"results\":[]}";
+        }
+
+        if (jsonBuilder.length() > 11) {
+            jsonBuilder.deleteCharAt(jsonBuilder.length() - 1); // Remove last comma
+        }
+
+        jsonBuilder.append("]}");
 
         return jsonBuilder.toString();
     }
