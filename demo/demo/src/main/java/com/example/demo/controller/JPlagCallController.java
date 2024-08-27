@@ -2,9 +2,9 @@ package com.example.demo.controller;
 
 import com.example.demo.ZipUtils;
 import com.example.demo.service.JPlagCallService;
+import com.example.demo.service.JPlagParser;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,12 +15,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -30,10 +28,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class JPlagCallController {
 
     private final JPlagCallService jPlagCallService;
+    private final JPlagParser jPlagParser;
+
 
     @Autowired
-    public JPlagCallController(JPlagCallService jPlagCallService) {
+    public JPlagCallController(JPlagCallService jPlagCallService, JPlagParser jPlagParser) {
         this.jPlagCallService = jPlagCallService;
+        this.jPlagParser = jPlagParser;
     }
 
     @PostMapping("/run")
@@ -49,13 +50,13 @@ public class JPlagCallController {
     }
 
     @PostMapping("/runJPlagWithReportFromUi")
-    public ResponseEntity<Map<String, String>> runJPlagWithReportFromUi(
+    public ResponseEntity<Map<String, Object>> runJPlagWithReportFromUi(
             @RequestParam("language") String language,
             @RequestParam("folder") MultipartFile folder) throws IOException {
 
         // Validate file
         if (folder.isEmpty() || !folder.getOriginalFilename().endsWith(".zip")) {
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("message", "Uploaded file must be a zip file");
             return ResponseEntity.badRequest().body(response);
         }
@@ -81,15 +82,22 @@ public class JPlagCallController {
         // Run JPlag processing and get the result file
         File resultZipFile = jPlagCallService.runJPlagWithReportFromUi(language, correctFolder);
 
+        // Parse JPlag results
+        List<Map<String, Object>> parsedResults = jPlagParser.parse(resultZipFile);
+
         // Clean up temporary files
         deleteFile(uploadedZipFile);
         FileUtils.deleteDirectory(extractedFolder);
 
+        // Log the resultMessageJson to ensure it's correct
+        System.out.println("Response JSON: " + parsedResults);
+
         // Prepare the response
-        Map<String, String> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("message", "Report generated successfully");
-        response.put("reportFilePath", resultZipFile.getAbsolutePath());
-        return ResponseEntity.ok(response);
+        response.put("results", parsedResults);
+        //return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of("message", "Report generated successfully", "results", parsedResults));
     }
 
 
