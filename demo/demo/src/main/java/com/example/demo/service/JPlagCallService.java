@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import com.example.demo.util.CSVResultParser;
+import com.example.demo.util.CollectFileUtils;
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
@@ -15,10 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -134,37 +133,54 @@ public class JPlagCallService {
             return "{\"error\": \"Invalid directory.\"}";
         }
 
-        if (!javaFilesDirectory.canRead()) {
-            System.out.println("Cannot read directory: " + javaFilesDirectory.getAbsolutePath());
-            return "{\"error\": \"Cannot read Java files directory.\"}";
-        }
+        //new impl for collectin java files
+        // Using CollectFileUtils to get all Java files organized by student directories
+        Map<String, List<String>> studentFiles = CollectFileUtils.collectJavaFilesPerStudent(javaFilesDirectory);
 
-        // Collect all .java files from the specified directory
-        List<String> javaFiles = new ArrayList<>();
-        File[] files = javaFilesDirectory.listFiles();
-        if (files == null) {
-            System.out.println("Unable to read contents of the directory: " + javaFilesDirectory.getAbsolutePath());
-            return "{\"error\": \"Unable to access contents of the directory.\"}";
-        } else {
-            for (File file : files) {
-                System.out.println("Checking file: " + file.getAbsolutePath());
-                if (file.isFile() && file.getName().endsWith(".java")) {
-                    if (file.canRead()) {
-                        System.out.println("Adding Java file: " + file.getAbsolutePath());
-                        javaFiles.add(file.getAbsolutePath());
-                    } else {
-                        System.out.println("Cannot read Java file: " + file.getAbsolutePath());
-                    }
-                } else {
-                    System.out.println("Skipping non-Java file or directory: " + file.getAbsolutePath());
-                }
+        List<String> allJavaFiles = new ArrayList<>();
+        for (Map.Entry<String, List<String>> entry : studentFiles.entrySet()) {
+            System.out.println("Student: " + entry.getKey());
+            for (String javaFile : entry.getValue()) {
+                System.out.println("   Java File: " + javaFile);
+                allJavaFiles.add(javaFile);  // Gather all files for tool invocation
             }
         }
 
-        if (javaFiles.isEmpty()) {
-            System.out.println("No Java files found in: " + javaFilesDirectory.getAbsolutePath());
+        if (allJavaFiles.isEmpty()) {
             return "{\"error\": \"No Java files found in the directory.\"}";
         }
+
+//        if (!javaFilesDirectory.canRead()) {
+//            System.out.println("Cannot read directory: " + javaFilesDirectory.getAbsolutePath());
+//            return "{\"error\": \"Cannot read Java files directory.\"}";
+//        }
+//
+//        // Collect all .java files from the specified directory
+//        List<String> javaFiles = new ArrayList<>();
+//        File[] files = javaFilesDirectory.listFiles();
+//        if (files == null) {
+//            System.out.println("Unable to read contents of the directory: " + javaFilesDirectory.getAbsolutePath());
+//            return "{\"error\": \"Unable to access contents of the directory.\"}";
+//        } else {
+//            for (File file : files) {
+//                System.out.println("Checking file: " + file.getAbsolutePath());
+//                if (file.isFile() && file.getName().endsWith(".java")) {
+//                    if (file.canRead()) {
+//                        System.out.println("Adding Java file: " + file.getAbsolutePath());
+//                        javaFiles.add(file.getAbsolutePath());
+//                    } else {
+//                        System.out.println("Cannot read Java file: " + file.getAbsolutePath());
+//                    }
+//                } else {
+//                    System.out.println("Skipping non-Java file or directory: " + file.getAbsolutePath());
+//                }
+//            }
+//        }
+//
+//        if (javaFiles.isEmpty()) {
+//            System.out.println("No Java files found in: " + javaFilesDirectory.getAbsolutePath());
+//            return "{\"error\": \"No Java files found in the directory.\"}";
+//        }
 
         // Correct classFile path
         String correctedClassFilePath = "C:\\Users\\filip\\IdeaProjects\\plagiarism-detector\\src\\main\\resources\\new.json";
@@ -187,7 +203,7 @@ public class JPlagCallService {
         command.add(RESULTS_CSV_PATH);
         command.add("-j6");
         command.add("allpairs");
-        command.addAll(javaFiles);
+        command.addAll(allJavaFiles);
 
         // Log the full command for debugging
         System.out.println("Running command: " + String.join(" ", command));
@@ -202,7 +218,7 @@ public class JPlagCallService {
             if (process.waitFor() == 0) {
                 // Parse results into a structured format if needed
                 //  String jsonResults = parseSimilarityResults(processOutput);
-                return parseResultsFromCSV(RESULTS_CSV_PATH);
+                return CSVResultParser.parseResultsFromCSV(RESULTS_CSV_PATH);
             } else {
                 return "{\"error\": \"Error running Fett tool\"}";
             }

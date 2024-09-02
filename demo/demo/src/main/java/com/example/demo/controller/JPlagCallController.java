@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
-import com.example.demo.ZipUtils;
+import com.example.demo.util.CollectFileUtils;
+import com.example.demo.util.ZipUtils;
 import com.example.demo.service.JPlagCallService;
 import com.example.demo.service.JPlagParser;
 import org.apache.commons.io.FileUtils;
@@ -130,6 +131,18 @@ public class JPlagCallController {
 
         // Check if there is an extra nested folder and move files to the correct directory
         File correctFolder = extractCorrectFolder(extractedFolder);
+
+        Map<String, List<String>> studentFiles = CollectFileUtils.collectJavaFilesPerStudent(correctFolder);
+
+        // Iterate over each student's files
+        for (Map.Entry<String, List<String>> entry : studentFiles.entrySet()) {
+            System.out.println("Student: " + entry.getKey());
+            for (String javaFile : entry.getValue()) {
+                System.out.println("   Java File: " + javaFile);
+            }
+        }
+
+
 
         String resultMessageJson  = jPlagCallService.runFettTool(correctFolder, language);
 
