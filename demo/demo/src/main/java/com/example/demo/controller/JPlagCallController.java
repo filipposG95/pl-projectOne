@@ -132,15 +132,15 @@ public class JPlagCallController {
         // Check if there is an extra nested folder and move files to the correct directory
         File correctFolder = extractCorrectFolder(extractedFolder);
 
-        Map<String, List<String>> studentFiles = CollectFileUtils.collectJavaFilesPerStudent(correctFolder);
+       // Map<String, List<String>> studentFiles = CollectFileUtils.collectJavaFilesPerStudent(correctFolder);
 
         // Iterate over each student's files
-        for (Map.Entry<String, List<String>> entry : studentFiles.entrySet()) {
-            System.out.println("Student: " + entry.getKey());
-            for (String javaFile : entry.getValue()) {
-                System.out.println("   Java File: " + javaFile);
-            }
-        }
+//        for (Map.Entry<String, List<String>> entry : studentFiles.entrySet()) {
+//            System.out.println("Student: " + entry.getKey());
+//            for (String javaFile : entry.getValue()) {
+//                System.out.println("   Java File: " + javaFile);
+//            }
+//        }
 
 
 

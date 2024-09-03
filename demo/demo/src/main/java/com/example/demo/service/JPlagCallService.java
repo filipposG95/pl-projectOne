@@ -135,20 +135,20 @@ public class JPlagCallService {
 
         //new impl for collectin java files
         // Using CollectFileUtils to get all Java files organized by student directories
-        Map<String, List<String>> studentFiles = CollectFileUtils.collectJavaFilesPerStudent(javaFilesDirectory);
+      //  Map<String, List<String>> studentFiles = CollectFileUtils.collectJavaFilesPerStudent(javaFilesDirectory);
 
-        List<String> allJavaFiles = new ArrayList<>();
-        for (Map.Entry<String, List<String>> entry : studentFiles.entrySet()) {
-            System.out.println("Student: " + entry.getKey());
-            for (String javaFile : entry.getValue()) {
-                System.out.println("   Java File: " + javaFile);
-                allJavaFiles.add(javaFile);  // Gather all files for tool invocation
-            }
-        }
+//        List<String> allJavaFiles = new ArrayList<>();
+//        for (Map.Entry<String, List<String>> entry : studentFiles.entrySet()) {
+//            System.out.println("Student: " + entry.getKey());
+//            for (String javaFile : entry.getValue()) {
+//                System.out.println("   Java File: " + javaFile);
+//                allJavaFiles.add(javaFile);  // Gather all files for tool invocation
+//            }
+//        }
 
-        if (allJavaFiles.isEmpty()) {
-            return "{\"error\": \"No Java files found in the directory.\"}";
-        }
+//        if (allJavaFiles.isEmpty()) {
+//            return "{\"error\": \"No Java files found in the directory.\"}";
+//        }
 
 //        if (!javaFilesDirectory.canRead()) {
 //            System.out.println("Cannot read directory: " + javaFilesDirectory.getAbsolutePath());
@@ -190,6 +190,8 @@ public class JPlagCallService {
         command.add(language);
         command.add("-jar");
         command.add(FETT_JAR_PATH);
+        command.add("--directory-mode");
+        command.add("-recursive"); // Add recursive flag
         command.add("-s");
         command.add("smith-waterman");
         command.add("-g");
@@ -203,7 +205,7 @@ public class JPlagCallService {
         command.add(RESULTS_CSV_PATH);
         command.add("-j6");
         command.add("allpairs");
-        command.addAll(allJavaFiles);
+        command.addAll(Collections.singleton(javaFilesDirectory.getAbsolutePath()));
 
         // Log the full command for debugging
         System.out.println("Running command: " + String.join(" ", command));
