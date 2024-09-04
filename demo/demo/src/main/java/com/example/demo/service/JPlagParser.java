@@ -30,11 +30,19 @@ public class JPlagParser {
                         .forEach(path -> {
                             try {
                                 Map<String, Object> comparisonData = objectMapper.readValue(path.toFile(), Map.class);
-                                String[] fileNames = path.getFileName().toString().replace(".json", "").split("-");
+                                String fileName = path.getFileName().toString();
+                                String[] fileNames = fileName.replace(".json", "").split("-");
+
+                                // Use Path objects to obtain parent information
+                                Path parent1 = path.getParent().resolve(fileNames[0]).getParent();
+                                Path parent2 = path.getParent().resolve(fileNames[1]).getParent();
+
                                 Map<String, Object> result = new HashMap<>();
                                 result.put("file1", fileNames[0]);
+                                result.put("parentDir1", parent1 == null ? "" : parent1.toString());
                                 result.put("file2", fileNames[1]);
-                                result.put("similarity", ((Map<String, Number>)comparisonData.get("similarities")).get("AVG"));
+                                result.put("parentDir2", parent2 == null ? "" : parent2.toString());
+                                result.put("similarity", ((Map<String, Number>) comparisonData.get("similarities")).get("AVG"));
                                 results.add(result);
                             } catch (IOException e) {
                                 e.printStackTrace();
