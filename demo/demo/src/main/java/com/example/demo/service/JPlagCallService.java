@@ -5,9 +5,12 @@ import com.example.demo.util.CollectFileUtils;
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
+import de.jplag.c.CLanguage;
+import de.jplag.cpp.CPPLanguage;
 import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
 import de.jplag.options.JPlagOptions;
+import de.jplag.python3.PythonLanguage;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import org.springframework.stereotype.Service;
 
@@ -79,15 +82,15 @@ public class JPlagCallService {
             case "java":
                 jplagLanguage = new JavaLanguage();
                 break;
-            //     case "c":
-            //         jplagLanguage = new CLanguage();
-            //         break;
-            //     case "c++":
-            //         jplagLanguage = new CppLanguage();
-            //         break;
-            //     case "python":
-            //         jplagLanguage = new PythonLanguage();
-            //         break;
+                 case "c":
+                     jplagLanguage = new CLanguage();
+                     break;
+                 case "c++":
+                     jplagLanguage = new CPPLanguage();
+                     break;
+                 case "python":
+                     jplagLanguage = new PythonLanguage();
+                     break;
             default:
                 throw new IllegalArgumentException("Unsupported language: " + language);
         }
