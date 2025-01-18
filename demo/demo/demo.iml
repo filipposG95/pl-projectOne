@@ -94,5 +94,11 @@
     <orderEntry type="library" name="Maven: io.micrometer:micrometer-core:1.10.5" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.hdrhistogram:HdrHistogram:2.1.12" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.latencyutils:LatencyUtils:2.0.3" level="project" />
+    <orderEntry type="library" name="Maven: de.jplag:c:5.0.0" level="project" />
+    <orderEntry type="library" name="Maven: de.jplag:cpp:5.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.antlr:antlr4-runtime:4.13.1" level="project" />
+    <orderEntry type="library" name="Maven: de.jplag:language-antlr-utils:5.0.0" level="project" />
+    <orderEntry type="library" name="Maven: de.jplag:cpp2:4.3.0" level="project" />
+    <orderEntry type="library" name="Maven: de.jplag:python-3:5.0.0" level="project" />
   </component>
 </module>

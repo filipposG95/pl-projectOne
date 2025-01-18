@@ -85,7 +85,7 @@ public class JPlagCallService {
                  case "c":
                      jplagLanguage = new CLanguage();
                      break;
-                 case "c++":
+                 case "cpp":
                      jplagLanguage = new CPPLanguage();
                      break;
                  case "python":
